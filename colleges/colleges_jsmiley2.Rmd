@@ -1,0 +1,94 @@
+---
+title: "Midterm Project"
+author: "Jennifer Smiley"
+date: "October 18, 2017"
+output:
+  html_document:
+    highlight: tango
+    keep_md: yes
+    theme: paper
+    toc: yes
+  pdf_document:
+    toc: no
+  word_document:
+    toc: no
+---
+
+```{r setup, include = FALSE}
+# DO NOT ALTER THIS CHUNK
+# Set knitr options
+knitr::opts_chunk$set(echo = TRUE)
+# Load required packages
+library(tidyverse)
+library(tidyr)
+library(stringr)
+# Load the dataset
+college <- read_csv("Most-Recent-Cohorts-All-Data-Elements.csv", na = c("NA", "NULL"))
+```
+
+# Introduction
+
+This package is needed for the United States map:
+```{r}
+library(maps)
+```
+
+# The SAT Average vs. the Location of the University
+
+This paper looks at the relationship of the SAT average versus the location of the University.
+
+## Cleaning and tidying the dataset
+
+```{r}
+college
+```
+
+The first step in cleaning the dataset for my question is selecting all of the columns needed to answer the question regarding the location of the school, the name of the university, and its average SAT score.
+```{r}
+college_clean <- college %>%
+  select(INSTNM, CITY, STABBR, REGION, LATITUDE, LONGITUDE, SAT_AVG) 
+college_clean
+```
+
+The second step is to filter out all of the NA's, or "Not Avaliable" data that appears in the SAT_AVG and the SAT_AVG_ALL. Also renaming the columns that appear to have weird names that could have a clearer name such as INSTNM which I changed to UNIVERSITY_NAME. And STABBR which I changed to STATE. Then only looked at the schools with a SAT average of above 1000.
+```{r}
+college_clean2 <- college_clean %>%
+  filter(!is.na(SAT_AVG))%>%
+  rename(UNIVERSITY_NAME = INSTNM)%>%
+  rename(STATE = STABBR)
+college_clean2
+```
+
+The Third step is to just look at the top teir of universities to see where they are located. Then just for my own curiosity, I put the Universities in decending order to figure out the college with the hightest and the lowest SAT average. This will show where the top colleges are located, showing if there is any correlation between where a college is located and what their SAT average is.
+
+```{r}
+college_clean3 <- college_clean2 %>%
+  filter(SAT_AVG >= 1400)%>%
+  arrange(desc(SAT_AVG))
+college_clean3
+```
+
+
+## Exploratory data analysis
+
+This graph of the United States shows the location, based on the longitude and the latitude, to directly show the correlation between where the top universities are located, and which has the highest average SAT scores. This Map graph shows that the top universities are located in the New England area and the top university is in California. Although this graph shows that the majority of the best colleges are in the northern part of the country there are still a few in the south that are also farly good as well. Although, in general, there are more top tier colleges in the north then there are in the south.
+
+```{r map}
+college_clean3 %>%
+ggplot(aes(LONGITUDE, LATITUDE))+
+  borders("state")+
+  geom_point(alpha = 0.6, size = 2, aes(color = SAT_AVG))+
+  scale_color_gradientn(colors = rev(rainbow(10)))+
+  coord_quickmap()
+```
+
+This scatter plot shows the same thing as the graph above but in a way that is harder to understand. You can see a general pattern about location, but it is hard decipher what the graph means exactly. The majority of the top schools are in the northern part of the country but there are a few good ones in sothern areas such as California.
+
+```{r scatter}
+college_clean3 %>%
+  ggplot(mapping = aes(x = SAT_AVG, y = LATITUDE))+
+  geom_point(alpha = 0.8, color = "lightseagreen")+
+  stat_smooth(method = "lm")
+```
+
+
